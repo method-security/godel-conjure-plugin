@@ -241,6 +241,78 @@ projects:
 				},
 			},
 		},
+		{
+			`
+projects:
+ project:
+   output-dir: outputDir
+   ir-locator:
+     type: codeartifact
+     codeartifact:
+       domain: my-domain
+       domain-owner: "123456789012"
+       repository: my-repo
+       package-group: com.example
+       package: my-package
+       version: 1.0.0
+`,
+			config.ConjurePluginConfig{
+				ProjectConfigs: map[string]v1.SingleConjureConfig{
+					"project": {
+						OutputDir: "outputDir",
+						IRLocator: v1.IRLocatorConfig{
+							Type: v1.LocatorTypeCodeArtifact,
+							CodeArtifact: &v1.CodeArtifactLocatorConfig{
+								Domain:       "my-domain",
+								DomainOwner:  "123456789012",
+								Repository:   "my-repo",
+								PackageGroup: "com.example",
+								Package:      "my-package",
+								Version:      "1.0.0",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			`
+projects:
+ project:
+   output-dir: outputDir
+   ir-locator:
+     type: codeartifact
+     codeartifact:
+       domain: my-domain
+       domain-owner: "123456789012"
+       repository: my-repo
+       package-group: com.example
+       package: my-package
+       version: 1.0.0
+       region: us-west-2
+       profile: my-profile
+`,
+			config.ConjurePluginConfig{
+				ProjectConfigs: map[string]v1.SingleConjureConfig{
+					"project": {
+						OutputDir: "outputDir",
+						IRLocator: v1.IRLocatorConfig{
+							Type: v1.LocatorTypeCodeArtifact,
+							CodeArtifact: &v1.CodeArtifactLocatorConfig{
+								Domain:       "my-domain",
+								DomainOwner:  "123456789012",
+								Repository:   "my-repo",
+								PackageGroup: "com.example",
+								Package:      "my-package",
+								Version:      "1.0.0",
+								Region:       stringPtr("us-west-2"),
+								Profile:      stringPtr("my-profile"),
+							},
+						},
+					},
+				},
+			},
+		},
 	} {
 		var got config.ConjurePluginConfig
 		err := yaml.Unmarshal([]byte(tc.in), &got)
@@ -365,5 +437,9 @@ func TestConjurePluginConfigToParam(t *testing.T) {
 }
 
 func boolPtr(in bool) *bool {
+	return &in
+}
+
+func stringPtr(in string) *string {
 	return &in
 }

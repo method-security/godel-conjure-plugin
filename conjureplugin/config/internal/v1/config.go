@@ -44,18 +44,34 @@ type SingleConjureConfig struct {
 type LocatorType string
 
 const (
-	LocatorTypeAuto   = LocatorType("auto")
-	LocatorTypeRemote = LocatorType("remote")
-	LocatorTypeYAML   = LocatorType("yaml")
-	LocatorTypeIRFile = LocatorType("ir-file")
+	LocatorTypeAuto         = LocatorType("auto")
+	LocatorTypeRemote       = LocatorType("remote")
+	LocatorTypeYAML         = LocatorType("yaml")
+	LocatorTypeIRFile       = LocatorType("ir-file")
+	LocatorTypeCodeArtifact = LocatorType("codeartifact")
 )
 
 // IRLocatorConfig is configuration that specifies a locator. It can be specified as a YAML string or as a full YAML
 // object. If it is specified as a YAML string, then the string is used as the value of "Locator" and LocatorTypeAuto is
 // used as the value of the type.
 type IRLocatorConfig struct {
-	Type    LocatorType `yaml:"type"`
-	Locator string      `yaml:"locator"`
+	Type         LocatorType                `yaml:"type"`
+	Locator      string                     `yaml:"locator"`
+	CodeArtifact *CodeArtifactLocatorConfig `yaml:"codeartifact,omitempty"`
+}
+
+// CodeArtifactLocatorConfig contains AWS CodeArtifact-specific configuration parameters
+type CodeArtifactLocatorConfig struct {
+	Domain       string `yaml:"domain"`
+	DomainOwner  string `yaml:"domain-owner"`
+	Repository   string `yaml:"repository"`
+	PackageGroup string `yaml:"package-group"`
+	Package      string `yaml:"package"`
+	Version      string `yaml:"version"`
+	// Region specifies the AWS region. If not provided, uses AWS SDK default region resolution
+	Region *string `yaml:"region,omitempty"`
+	// Profile specifies the AWS profile to use. If not provided, uses AWS SDK default profile resolution
+	Profile *string `yaml:"profile,omitempty"`
 }
 
 func (cfg *IRLocatorConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {

@@ -15,9 +15,12 @@
 package conjureplugin
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/codeartifact"
 	"github.com/palantir/godel-conjure-plugin/v6/ir-gen-cli-bundler/conjureircli"
 	"github.com/palantir/pkg/safehttp"
 	"github.com/pkg/errors"
@@ -100,5 +103,92 @@ func (p *localFileIRProvider) IRBytes() ([]byte, error) {
 }
 
 func (p *localFileIRProvider) GeneratedFromYAML() bool {
+	return false
+}
+
+var _ IRProvider = &codeArtifactIRProvider{}
+
+type codeArtifactIRProvider struct {
+	domain       string
+	domainOwner  string
+	repository   string
+	packageGroup string
+	packageName  string
+	version      string
+	region       *string
+	profile      *string
+}
+
+// NewCodeArtifactIRProvider returns an IRProvider that downloads IR from AWS CodeArtifact.
+func NewCodeArtifactIRProvider(domain, domainOwner, repository, packageGroup, packageName, version string, region, profile *string) IRProvider {
+	return &codeArtifactIRProvider{
+		domain:       domain,
+		domainOwner:  domainOwner,
+		repository:   repository,
+		packageGroup: packageGroup,
+		packageName:  packageName,
+		version:      version,
+		region:       region,
+		profile:      profile,
+	}
+}
+
+func (p *codeArtifactIRProvider) IRBytes() ([]byte, error) {
+	ctx := context.Background()
+
+	// Load AWS configuration
+	var cfg config.LoadOptionsFunc
+	if p.profile != nil {
+		cfg = config.WithSharedConfigProfile(*p.profile)
+	}
+	var regionOpt config.LoadOptionsFunc
+	if p.region != nil {
+		regionOpt = config.WithRegion(*p.region)
+	}
+
+	var opts []func(*config.LoadOptions) error
+	if cfg != nil {
+		opts = append(opts, cfg)
+	}
+	if regionOpt != nil {
+		opts = append(opts, regionOpt)
+	}
+
+	awsCfg, err := config.LoadDefaultConfig(ctx, opts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load AWS configuration")
+	}
+
+	// Create CodeArtifact client
+	client := codeartifact.NewFromConfig(awsCfg)
+
+	// Get the package version asset download URL
+	getPackageVersionAssetInput := &codeartifact.GetPackageVersionAssetInput{
+		Domain:         &p.domain,
+		DomainOwner:    &p.domainOwner,
+		Repository:     &p.repository,
+		Format:         "generic", // CodeArtifact generic format for raw files
+		Namespace:      &p.packageGroup,
+		Package:        &p.packageName,
+		PackageVersion: &p.version,
+		Asset:          &p.packageName, // Asset name is typically the same as package name for IR files
+	}
+
+	result, err := client.GetPackageVersionAsset(ctx, getPackageVersionAssetInput)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get package version asset from CodeArtifact: domain=%s, repository=%s, package=%s/%s, version=%s",
+			p.domain, p.repository, p.packageGroup, p.packageName, p.version)
+	}
+
+	// Read the asset content
+	assetBytes, err := ioutil.ReadAll(result.Asset)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read asset content from CodeArtifact response")
+	}
+
+	return assetBytes, nil
+}
+
+func (p *codeArtifactIRProvider) GeneratedFromYAML() bool {
 	return false
 }

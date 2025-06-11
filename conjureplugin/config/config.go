@@ -121,6 +121,15 @@ func (cfg *IRLocatorConfig) ToIRProvider() (conjureplugin.IRProvider, error) {
 		return conjureplugin.NewLocalYAMLIRProvider(cfg.Locator), nil
 	case v1.LocatorTypeIRFile:
 		return conjureplugin.NewLocalFileIRProvider(cfg.Locator), nil
+	case v1.LocatorTypeCodeArtifact:
+		if cfg.CodeArtifact == nil {
+			return nil, errors.Errorf("codeartifact configuration is required when locator type is %s", v1.LocatorTypeCodeArtifact)
+		}
+		ca := cfg.CodeArtifact
+		if ca.Domain == "" || ca.DomainOwner == "" || ca.Repository == "" || ca.PackageGroup == "" || ca.Package == "" || ca.Version == "" {
+			return nil, errors.Errorf("codeartifact configuration requires domain, domain-owner, repository, package-group, package, and version")
+		}
+		return conjureplugin.NewCodeArtifactIRProvider(ca.Domain, ca.DomainOwner, ca.Repository, ca.PackageGroup, ca.Package, ca.Version, ca.Region, ca.Profile), nil
 	default:
 		return nil, errors.Errorf("unknown locator type: %s", locatorType)
 	}
