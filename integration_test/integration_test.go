@@ -93,6 +93,10 @@ projects:
 
 	pluginPath, err := products.Bin("conjure-plugin")
 	require.NoError(t, err)
+	
+	// Ensure plugin binary has execute permissions for CI environments
+	err = os.Chmod(pluginPath, 0755)
+	require.NoError(t, err)
 
 	projectDir, cleanup, err := dirs.TempDir(".", "")
 	require.NoError(t, err)
