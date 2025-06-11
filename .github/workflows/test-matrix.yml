@@ -1,0 +1,53 @@
+name: Test Matrix
+
+on:
+  push:
+    branches: ["master", "develop"]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  test-matrix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ["1.24.0", "1.24.3"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Cache gödel
+        uses: actions/cache@v4
+        with:
+          path: ~/.godel
+          key: ${{ runner.os }}-godel-${{ hashFiles('godelw', 'godel/config/godel.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-godel-
+
+      - name: Build
+        run: ./godelw build
+
+      - name: Test
+        run: ./godelw test
+
+      # Only run verify on Linux with the primary Go version to avoid redundancy
+      - name: Verify
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.24.3'
+        run: ./godelw verify --skip-test
