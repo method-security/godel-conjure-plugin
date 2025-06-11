@@ -64,7 +64,48 @@ projects:
       locator: localhost:8080/ir.json
 ```
 
-The supported types are `remote`, `yaml` and `ir-file`.
+The supported types are `remote`, `yaml`, `ir-file` and `codeartifact`.
+
+AWS CodeArtifact
+----------------
+The `codeartifact` locator type allows retrieving Conjure IR from AWS CodeArtifact repositories. This requires AWS credentials to be configured (via AWS CLI, environment variables, IAM roles, or AWS profiles).
+
+```yaml
+version: 1
+projects:
+  project-1:
+    output-dir: outputDir
+    ir-locator:
+      type: codeartifact
+      codeartifact:
+        domain: my-domain
+        domain-owner: "123456789012"
+        repository: my-repository
+        package-group: com.example
+        package: my-conjure-ir
+        version: 1.0.0
+        region: us-west-2      # Optional: AWS region (uses AWS SDK default if not specified)
+        profile: my-profile    # Optional: AWS profile (uses AWS SDK default if not specified)
+```
+
+The CodeArtifact configuration requires:
+- `domain`: The CodeArtifact domain name
+- `domain-owner`: The AWS account ID that owns the domain
+- `repository`: The repository name within the domain
+- `package-group`: The package namespace (e.g., com.example)
+- `package`: The package name containing the IR
+- `version`: The specific package version to retrieve
+
+Optional parameters:
+- `region`: AWS region override (if not specified, uses AWS SDK default region resolution)
+- `profile`: AWS profile override (if not specified, uses AWS SDK default profile resolution)
+
+Authentication is handled automatically by the AWS SDK using standard AWS credential resolution:
+1. Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+2. AWS credentials file (~/.aws/credentials)
+3. AWS config file (~/.aws/config)
+4. IAM roles for Amazon EC2
+5. AWS profiles specified in the configuration
 
 Publish
 -------
