@@ -107,6 +107,8 @@ Authentication is handled automatically by the AWS SDK using standard AWS creden
 4. IAM roles for Amazon EC2
 5. AWS profiles specified in the configuration
 
+
+
 Publish
 -------
 The `conjure-publish` task publishes Conjure IR to a location based on the provided arguments. The Conjure IR files that
