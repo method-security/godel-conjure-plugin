@@ -15,8 +15,8 @@ This is godel-conjure-plugin, a [Gödel](https://github.com/palantir/godel) plug
 # Run all tests
 ./godelw test
 
-# Run checks (formatting, linting, imports)
-./godelw check
+# Run checks (format, imports, linting; godel 2.152 replaced `check` with `lint`)
+./godelw verify --skip-test
 
 # Generate embedded CLI bundle (when updating Conjure version)
 ./godelw generate
@@ -98,7 +98,7 @@ projects:
 
 ## Build System
 
-- Uses **Go 1.24.0** with vendor mode (`GOFLAGS: "-mod=vendor"`)
+- Uses **Go 1.26.11** with vendor mode (`GOFLAGS: "-mod=vendor"`)
 - Follows Gödel plugin conventions
 - Embeds Conjure CLI using `go:embed` for YAML processing
 - Integration tests create temporary projects and test full plugin execution
